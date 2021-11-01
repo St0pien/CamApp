@@ -1,16 +1,36 @@
-import React from 'react'
-import { StyleSheet, Text, View, Image } from 'react-native'
+import React from 'react';
+import { StyleSheet, Text, Image, TouchableOpacity } from 'react-native';
 
-const PhotoItem = ({ id, uri, height, width }) => {
+const PhotoItem = ({
+  item,
+  height,
+  width,
+  navigation,
+  onSelect,
+}) => {
+  const { id, uri, selected } = item;
+
+  const onPress = () => {
+    navigation.navigate('Photo', { item });
+  };
+
+  const onLongPress = () => {
+    onSelect(id);
+  };
+
   return (
-    <View style={{...styles.container, height: height, maxWidth: width }}>
+    <TouchableOpacity
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={{ ...styles.container, height: height, maxWidth: width, backgroundColor: selected ? 'red' : '' }}
+    >
       <Image style={styles.img} source={{ uri }} />
-      <Text style={styles.label}>{ id }</Text>
-    </View>
-  )
-}
+      <Text style={styles.label}>{id}{selected}</Text>
+    </TouchableOpacity>
+  );
+};
 
-export default PhotoItem
+export default PhotoItem;
 
 const styles = StyleSheet.create({
   container: {
@@ -30,4 +50,4 @@ const styles = StyleSheet.create({
     right: 15,
     fontSize: 18
   }
-})
+});

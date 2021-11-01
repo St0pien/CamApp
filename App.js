@@ -9,6 +9,7 @@ import { colors } from "./config";
 import Home from "./screens/Home";
 import Gallery from "./screens/Gallery";
 import Camera from "./screens/Camera";
+import Photo from "./screens/Photo";
 
 const Stack = createNativeStackNavigator();
 
@@ -37,8 +38,9 @@ export default function App() {
           component={Home}
           options={{ headerShown: false }}
         ></Stack.Screen>
-        <Stack.Screen name="Gallery" component={Gallery}></Stack.Screen>
-        <Stack.Screen name="Camera" component={Camera}></Stack.Screen>
+        <Stack.Screen name="Gallery" options={{ title: 'Zdjęcia w telefonie' }} component={Gallery}></Stack.Screen>
+        <Stack.Screen name="Camera" options={{ title: 'Aparat', headerTransparent: true, headerStyle: {}, headerShadowVisible: false }} component={Camera}></Stack.Screen>
+        <Stack.Screen name="Photo" options={{ title: 'Podgląd' }} component={Photo}></Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   ) : null;
