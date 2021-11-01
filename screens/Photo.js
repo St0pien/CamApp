@@ -7,12 +7,14 @@ import {colors} from '../config';
 
 const Photo = ({ navigation, route }) => {
   const share = async () => {
-    Sharing.shareAsync(route.params.uri);
+    Sharing.shareAsync(route.params.item.uri);
   }
 
   const deleteItem = async () => {
-    await MediaLibrary.deleteAssetsAsync(route.params.item);
-    navigation.goBack();
+    try {
+      await MediaLibrary.deleteAssetsAsync(route.params.item);
+      navigation.goBack();
+    } catch{}
   }
 
   return (

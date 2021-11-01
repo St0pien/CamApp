@@ -80,8 +80,10 @@ const Gallery = ({ navigation }) => {
     }
 
     (async () => {
-      await MediaLibrary.deleteAssetsAsync(selected);
-      await loadAssets();
+      try {
+        await MediaLibrary.deleteAssetsAsync(selected);
+        await loadAssets();
+      } catch {}
     })();
   }
 
