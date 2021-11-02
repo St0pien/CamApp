@@ -4,7 +4,10 @@ import {
   View,
   ToastAndroid,
   FlatList,
-  Dimensions
+  Dimensions,
+  Text,
+  BackHandler,
+  ActivityIndicator
 } from 'react-native';
 import { colors } from '../config';
 import Button from '../components/Button';
@@ -17,14 +20,27 @@ const Gallery = ({ navigation }) => {
   const [photos, setPhotos] = useState([]);
   const [columnCount, setColumnCount] = useState(2);
   const [gridDisplay, setGridDisplay] = useState(true);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [portionCount, setPortionCount] = useState(1);
+  const [loadingAssets, setLoadingAssets] = useState(false);
 
-  const loadAssets = async () => {
+  const loadAssets = async (add = false) => {
+    setLoadingAssets(true);
+    if (!add) deselect();
+    const createdBefore = add && photos.length > 0 ? photos[photos.length-1].creationTime : null;
     const assets = await MediaLibrary.getAssetsAsync({
-      first: 30,
+      first: 20 * portionCount,
       mediaType: 'photo',
-      sortBy: 'creationTime'
+      sortBy: 'creationTime',
+      createdBefore
     });
 
+    setPortionCount(portionCount+1);
+    setLoadingAssets(false);
+    if (add) {
+      setPhotos([...photos, ...assets.assets]);
+      return;
+    }
     setPhotos(assets.assets);
   };
 
@@ -36,9 +52,21 @@ const Gallery = ({ navigation }) => {
 
       return () => {
         setPhotos([]);
-      }
+      };
     }, [])
   );
+
+  useEffect(() => {
+    const handler = BackHandler.addEventListener('hadrwareBackPress', () => {
+      if (selectionMode) {
+        deselect();
+        return true;
+      }
+      return false;
+    });
+
+    return () => handler.remove();
+  }, [selectionMode]);
 
   useEffect(() => {
     (async () => {
@@ -66,16 +94,28 @@ const Gallery = ({ navigation }) => {
   const itemHeight = Dimensions.get('window').width / columnCount;
 
   const onSelect = (id) => {
+    if (!selectionMode) setSelectionMode(true);
     const buf = [...photos];
-    const photo = buf.find(p => p.id === id);
+    const photo = buf.find((p) => p.id === id);
     photo.selected = !photo.selected;
     setPhotos(buf);
   };
 
+  const deselect = () => {
+    setSelectionMode(false);
+    const buf = [...photos];
+    buf.forEach((p) => (p.selected = false));
+    setPhotos(buf);
+  };
+
   const onDelete = () => {
-    const selected = photos.filter(p => p.selected);
+    const selected = photos.filter((p) => p.selected);
     if (selected.length === 0) {
-      ToastAndroid.show('Select image!', ToastAndroid.SHORT, ToastAndroid.CENTER);
+      ToastAndroid.show(
+        'Select image!',
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
       return;
     }
 
@@ -85,7 +125,7 @@ const Gallery = ({ navigation }) => {
         await loadAssets();
       } catch {}
     })();
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -112,6 +152,7 @@ const Gallery = ({ navigation }) => {
         key={columnCount + gridDisplay}
         data={photos}
         keyExtractor={(item) => item.id}
+        onEndReached={() => loadAssets(true)}
         renderItem={({ item }) => (
           <PhotoItem
             item={item}
@@ -119,9 +160,23 @@ const Gallery = ({ navigation }) => {
             height={itemHeight}
             navigation={navigation}
             onSelect={onSelect}
+            selectMode={selectionMode}
           />
         )}
       />
+      {loadingAssets ? (
+        <ActivityIndicator
+          style={styles.loader}
+          size="large"
+          color={colors.primaryDark}
+          animating={loadingAssets}
+        />
+      ) : null}
+      {selectionMode ? (
+        <Button onPress={deselect} style={styles.modal}>
+          <Text style={styles.modalTxt}>Selecting images</Text>
+        </Button>
+      ) : null}
     </View>
   );
 };
@@ -138,11 +193,41 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   btn: {
-    flex: 1
+    flex: 1,
+    margin: 15
   },
   txt: {
     color: 'white',
     fontSize: 32,
     textAlign: 'center'
+  },
+  modal: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: 70,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalTxt: {
+    width: '80%',
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: colors.primaryDark,
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 24,
+    fontFamily: 'Nunito_bold'
+  },
+  loader: {
+    height: 80,
+    transform: [
+      {
+        scaleX: 1.5
+      },
+      {
+        scaleY: 1.5
+      }
+    ]
   }
 });

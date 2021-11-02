@@ -12,7 +12,6 @@ const Button = (props) => {
 
 const styles = StyleSheet.create({
     btn: {
-        margin: 15,
         textAlign: 'center',
     },
 });

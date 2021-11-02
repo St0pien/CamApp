@@ -3,15 +3,19 @@ import { StyleSheet, Text, Image, TouchableOpacity, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { colors } from '../config';
 
-const PhotoItem = ({ item, height, width, navigation, onSelect }) => {
+const PhotoItem = ({ item, height, width, navigation, onSelect, selectMode }) => {
   const { id, uri, selected } = item;
 
   const onPress = () => {
-    onSelect(id);
+    if (selectMode) {
+      onSelect(id);
+      return;
+    }
+    navigation.navigate('Photo', { item });
   };
   
   const onLongPress = () => {
-    navigation.navigate('Photo', { item });
+    onSelect(id);
   };
 
   return (
@@ -49,7 +53,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    padding: 10
+    padding: 10,
+    borderRadius: 10
   },
   img: {
     flex: 1,
