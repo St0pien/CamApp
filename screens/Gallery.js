@@ -21,7 +21,6 @@ const Gallery = ({ navigation }) => {
   const [columnCount, setColumnCount] = useState(2);
   const [gridDisplay, setGridDisplay] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
-  const [portionCount, setPortionCount] = useState(1);
   const [loadingAssets, setLoadingAssets] = useState(false);
 
   const loadAssets = async (add = false) => {
@@ -29,13 +28,12 @@ const Gallery = ({ navigation }) => {
     if (!add) deselect();
     const createdBefore = add && photos.length > 0 ? photos[photos.length-1].creationTime : null;
     const assets = await MediaLibrary.getAssetsAsync({
-      first: 20 * portionCount,
+      first: 20,
       mediaType: 'photo',
       sortBy: 'creationTime',
       createdBefore
     });
 
-    setPortionCount(portionCount+1);
     setLoadingAssets(false);
     if (add) {
       setPhotos([...photos, ...assets.assets]);
@@ -47,7 +45,9 @@ const Gallery = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       (async () => {
-        await loadAssets();
+        try {
+          await loadAssets();
+        } catch {}
       })();
 
       return () => {
@@ -96,7 +96,7 @@ const Gallery = ({ navigation }) => {
   const onSelect = (id) => {
     if (!selectionMode) setSelectionMode(true);
     const buf = [...photos];
-    const photo = buf.find((p) => p.id === id);
+    const photo = buf.find((p) => p.id == id);
     photo.selected = !photo.selected;
     setPhotos(buf);
   };
@@ -109,7 +109,7 @@ const Gallery = ({ navigation }) => {
   };
 
   const onDelete = () => {
-    const selected = photos.filter((p) => p.selected);
+    const selected = photos.filter(p => p.selected);
     if (selected.length === 0) {
       ToastAndroid.show(
         'Select image!',
@@ -153,6 +153,7 @@ const Gallery = ({ navigation }) => {
         data={photos}
         keyExtractor={(item) => item.id}
         onEndReached={() => loadAssets(true)}
+        onEndReachedTreshold={0.1}
         renderItem={({ item }) => (
           <PhotoItem
             item={item}

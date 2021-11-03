@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ToastAndroid } from 'react-native';
+import { StyleSheet, Text, View, ToastAndroid, ActivityIndicator } from 'react-native';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import CircleButton from '../components/CircleButton';
+import {colors} from '../config';
 
-const CameraScreen = () => {
+const CameraScreen = ({ navigation }) => {
   const [permGranted, setPermGranted] = useState(null);
   const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
+  const [photoInProgress, setPhotoInProgress] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -28,8 +30,10 @@ const CameraScreen = () => {
 
   const takePhoto = () => {
     if (!cameraRef.current) return;
+    if (photoInProgress) return;
 
     (async () => {
+      setPhotoInProgress(true);
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0,
         base64: false,
@@ -46,6 +50,7 @@ const CameraScreen = () => {
         ToastAndroid.CENTER,
         ToastAndroid.CENTER
       );
+      setPhotoInProgress(false);
     })();
   };
 
@@ -71,6 +76,7 @@ const CameraScreen = () => {
           name="undo-alt"
           size={30}
         />
+        <ActivityIndicator style={styles.loader} size="large" color={colors.primary} animating={photoInProgress} />
       </View>
     );
   } else if (permGranted === false) {
@@ -119,5 +125,20 @@ const styles = StyleSheet.create({
     left: '20%',
     width: 70,
     height: 70
+  },
+  loader: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    top: '40%',
+    left: '50%',
+    transform: [
+      {
+        translateX: -50
+      },
+      {
+        scale: 2
+      }
+    ]
   }
 });
