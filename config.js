@@ -4,3 +4,5 @@ export const colors = {
   primaryLight: "#ff5c8d",
   dark: "#222",
 };
+
+export const albumName = 'CamApp';

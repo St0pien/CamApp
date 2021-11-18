@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ToastAndroid, ActivityIndicator } from 'react-n
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import CircleButton from '../components/CircleButton';
-import {colors} from '../config';
+import {albumName, colors} from '../config';
 
 const CameraScreen = ({ navigation }) => {
   const [permGranted, setPermGranted] = useState(null);
@@ -44,7 +44,13 @@ const CameraScreen = ({ navigation }) => {
         ToastAndroid.CENTER,
         ToastAndroid.CENTER
       );
-      await MediaLibrary.createAssetAsync(photo.uri);
+      const album = await MediaLibrary.getAlbumAsync(albumName);
+      const photoAsset = await MediaLibrary.createAssetAsync(photo.uri);
+      if (!album) {
+        await MediaLibrary.createAlbumAsync(albumName, photoAsset, false);
+      } else {
+        await MediaLibrary.addAssetsToAlbumAsync(photoAsset, album);
+      }
       ToastAndroid.show(
         'Photo saved',
         ToastAndroid.CENTER,

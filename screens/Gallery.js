@@ -9,7 +9,7 @@ import {
   BackHandler,
   ActivityIndicator
 } from 'react-native';
-import { colors } from '../config';
+import { albumName, colors } from '../config';
 import Button from '../components/Button';
 import * as MediaLibrary from 'expo-media-library';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -27,14 +27,22 @@ const Gallery = ({ navigation }) => {
     setLoadingAssets(true);
     if (!add) deselect();
     const createdBefore = add && photos.length > 0 ? photos[photos.length-1].creationTime : null;
+    let album = await MediaLibrary.getAlbumAsync(albumName);
+    if (!album) {
+      setPhotos([]);
+      setLoadingAssets(false);
+      return;
+    }
     const assets = await MediaLibrary.getAssetsAsync({
+      album,
       first: 20,
       mediaType: 'photo',
       sortBy: 'creationTime',
-      createdBefore
+      createdBefore,
     });
 
     setLoadingAssets(false);
+    console.log(photos);
     if (add) {
       setPhotos([...photos, ...assets.assets]);
       return;
