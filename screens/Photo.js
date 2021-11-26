@@ -17,9 +17,15 @@ const Photo = ({ navigation, route }) => {
     } catch{}
   }
 
+  const width = route.params.item.width;
+  const height = route.params.item.height;
+  const bigger = width < height ? height : width;
+  const smaller = width > height ? height : width;
+
   return (
     <View style={styles.container}>
       <Image style={styles.img} source={{ uri: route.params.item.uri }} />
+      <Text style={styles.sizeLabel}>{bigger} x {smaller}</Text>
       <View style={styles.buttons}>
         <CircleButton onPress={share} name="share-alt" size={50} />
         <CircleButton onPress={deleteItem} name="trash" size={50} />
@@ -39,6 +45,13 @@ const styles = StyleSheet.create({
   img: {
     flex: 3,
     borderRadius: 20
+  },
+  sizeLabel: {
+    fontSize: 24,
+    paddingVertical: 10,
+    color: colors.primary,
+    textAlign: 'center',
+    fontFamily: 'Nunito'
   },
   buttons: {
     flex: 1,

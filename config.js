@@ -5,4 +5,7 @@ export const colors = {
   dark: "#222",
 };
 
-export const albumName = 'CamApp';
+export const albumName = 'DCIM';
+export const defaults = {
+  'Ratios': 9
+}

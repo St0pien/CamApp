@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ToastAndroid, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ToastAndroid,
+  ActivityIndicator
+} from 'react-native';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import CircleButton from '../components/CircleButton';
-import {albumName, colors} from '../config';
+import { colors, defaults } from '../config';
+import Toolbar from '../components/Toolbar';
 
 const CameraScreen = ({ navigation }) => {
   const [permGranted, setPermGranted] = useState(null);
@@ -44,13 +51,7 @@ const CameraScreen = ({ navigation }) => {
         ToastAndroid.CENTER,
         ToastAndroid.CENTER
       );
-      const album = await MediaLibrary.getAlbumAsync(albumName);
-      const photoAsset = await MediaLibrary.createAssetAsync(photo.uri);
-      if (!album) {
-        await MediaLibrary.createAlbumAsync(albumName, photoAsset, false);
-      } else {
-        await MediaLibrary.addAssetsToAlbumAsync(photoAsset, album);
-      }
+      await MediaLibrary.createAssetAsync(photo.uri);
       ToastAndroid.show(
         'Photo saved',
         ToastAndroid.CENTER,
@@ -60,15 +61,64 @@ const CameraScreen = ({ navigation }) => {
     })();
   };
 
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [animateSettings, setAnimateSettings] = useState(false);
+  const toggleSettings = () => {
+    setAnimateSettings(true);
+    setSettingsVisible(!settingsVisible);
+  };
+
+  const [settings, setSettings] = useState({});
+  const [activeSettings, setActiveSettings] = useState({});
+
+  const onSettingsSet = (title, value) => {
+    const buf = JSON.parse(JSON.stringify(activeSettings));
+    buf[title] = value;
+    setActiveSettings(buf);
+  };
+
+  useEffect(() => {
+    (async () => {
+      if (!activeSettings.Ratios) return;
+      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(activeSettings.Ratios);
+      const buf = JSON.parse(JSON.stringify(settings));
+      buf.Sizes = sizes;
+      setSettings(buf);
+    })();
+  }, [activeSettings])
+
+  const cameraReady = () => {
+    (async () => {
+      const ratios = await cameraRef.current.getSupportedRatiosAsync();
+      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(ratios[defaults.Ratios]);
+      setSettings({
+        'Flash Mode': Camera.Constants.FlashMode,
+        'White Balance': Camera.Constants.WhiteBalance,
+        Ratios: ratios,
+        Sizes: sizes
+      });
+    })();
+  };
+
   // render
   if (permGranted) {
     return (
       <View style={styles.container}>
+        <Toolbar
+          visible={settingsVisible}
+          animate={animateSettings}
+          settings={settings}
+          onSettingsSet={onSettingsSet}
+        />
         <Camera
-          autoFocus={Camera.Constants.AutoFocus.off}
+          onCameraReady={cameraReady}
           type={cameraType}
           style={styles.camera}
           ref={cameraRef}
+          flashMode={activeSettings['Flash Mode']}
+          whiteBalance={activeSettings['White Balance']}
+          ratio={activeSettings['Ratios']}
+          pictureSize={activeSettings['Sizes']}
         ></Camera>
         <CircleButton
           onPress={takePhoto}
@@ -82,7 +132,18 @@ const CameraScreen = ({ navigation }) => {
           name="undo-alt"
           size={30}
         />
-        <ActivityIndicator style={styles.loader} size="large" color={colors.primary} animating={photoInProgress} />
+        <CircleButton
+          onPress={toggleSettings}
+          style={styles.settingsBtn}
+          name="cog"
+          size={30}
+        />
+        <ActivityIndicator
+          style={styles.loader}
+          size="large"
+          color={colors.primary}
+          animating={photoInProgress}
+        />
       </View>
     );
   } else if (permGranted === false) {
@@ -123,12 +184,24 @@ const styles = StyleSheet.create({
     bottom: 40,
     left: '50%',
     width: 80,
-    height: 80
+    height: 80,
+    transform: [
+      {
+        translateX: -40
+      }
+    ]
   },
   revBtn: {
     position: 'absolute',
     bottom: 40,
-    left: '20%',
+    left: '15%',
+    width: 70,
+    height: 70
+  },
+  settingsBtn: {
+    position: 'absolute',
+    bottom: 40,
+    right: '15%',
     width: 70,
     height: 70
   },

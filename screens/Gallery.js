@@ -42,7 +42,6 @@ const Gallery = ({ navigation }) => {
     });
 
     setLoadingAssets(false);
-    console.log(photos);
     if (add) {
       setPhotos([...photos, ...assets.assets]);
       return;
