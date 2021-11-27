@@ -2,7 +2,6 @@ import React from 'react';
 import { useEffect, useRef } from 'react';
 import {
   StyleSheet,
-  Text,
   ScrollView,
   Animated,
   Dimensions
@@ -10,20 +9,20 @@ import {
 import { colors } from '../config';
 import RadioGroup from './RadioGroup';
 
-const height = Dimensions.get('window').height;
+const halfWidth = -Dimensions.get('window').width / 2;
 
-const Toolbar = ({ visible, animate, settings, onSettingsSet }) => {
-  const target = visible ? 0 : height;
+const Toolbar = ({ visible, animate, settings, activeSettings, onSettingsSet }) => {
+  const target = visible ? 0 : halfWidth;
 
   const moveAnim = useRef(
-    new Animated.Value(visible || !animate ? height : 0)
+    new Animated.Value((visible || !animate) ? halfWidth : 0)
   ).current;
   useEffect(() => {
     if (animate) {
       Animated.spring(moveAnim, {
         toValue: target,
-        velocity: 1,
-        tension: 0,
+        velocity: 10,
+        tension: 40,
         friction: 10,
         useNativeDriver: true
       }).start();
@@ -36,7 +35,7 @@ const Toolbar = ({ visible, animate, settings, onSettingsSet }) => {
 
   return (
     <Animated.View
-      style={{ ...styles.toolbar, transform: [{ translateY: moveAnim }] }}
+      style={{ ...styles.toolbar, transform: [{ translateX: moveAnim }] }}
     >
       <ScrollView style={styles.scrollContainer}>
         {Object.entries(settings).map(([title, vals]) => (
@@ -44,6 +43,7 @@ const Toolbar = ({ visible, animate, settings, onSettingsSet }) => {
             key={title + JSON.stringify(vals)}
             title={title}
             data={vals}
+            chosen={activeSettings[title]}
             onChange={onChange}
           />
         ))}

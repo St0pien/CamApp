@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import Button from './Button'
-import { FontAwesome5, FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import {colors} from '../config';
 
 const CircleButton = (props) => {

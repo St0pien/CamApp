@@ -9,10 +9,11 @@ import {
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import CircleButton from '../components/CircleButton';
-import { colors, defaults } from '../config';
+import { colors } from '../config';
 import Toolbar from '../components/Toolbar';
+import { Dimensions } from 'react-native';
 
-const CameraScreen = ({ navigation }) => {
+const CameraScreen = () => {
   const [permGranted, setPermGranted] = useState(null);
   const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
   const [photoInProgress, setPhotoInProgress] = useState(false);
@@ -72,7 +73,7 @@ const CameraScreen = ({ navigation }) => {
   const [activeSettings, setActiveSettings] = useState({});
 
   const onSettingsSet = (title, value) => {
-    const buf = JSON.parse(JSON.stringify(activeSettings));
+    const buf = Object.assign({}, activeSettings);
     buf[title] = value;
     setActiveSettings(buf);
   };
@@ -80,40 +81,60 @@ const CameraScreen = ({ navigation }) => {
   useEffect(() => {
     (async () => {
       if (!activeSettings.Ratios) return;
-      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(activeSettings.Ratios);
+      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(
+        activeSettings.Ratios
+      );
       const buf = JSON.parse(JSON.stringify(settings));
       buf.Sizes = sizes;
       setSettings(buf);
     })();
-  }, [activeSettings])
+  }, [activeSettings]);
 
   const cameraReady = () => {
     (async () => {
       const ratios = await cameraRef.current.getSupportedRatiosAsync();
-      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(ratios[defaults.Ratios]);
+      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(
+        '16:9'
+      );
       setSettings({
         'Flash Mode': Camera.Constants.FlashMode,
         'White Balance': Camera.Constants.WhiteBalance,
         Ratios: ratios,
         Sizes: sizes
       });
+
+      setActiveSettings({
+        'Flash Mode': 'auto',
+        'White Balance': 'cloudy',
+        Ratios: '16:9',
+        Sizes: '1920x1080'
+      });
     })();
   };
 
   // render
   if (permGranted) {
+    let width = '100%',
+      height = '100%';
+    if (activeSettings.Ratios) {
+      const [x, y] = activeSettings.Ratios.split(':');
+      width = Dimensions.get('window').width;
+      height = (width * x) / y;
+    }
+
     return (
       <View style={styles.container}>
         <Toolbar
           visible={settingsVisible}
           animate={animateSettings}
           settings={settings}
+          activeSettings={activeSettings}
           onSettingsSet={onSettingsSet}
         />
         <Camera
           onCameraReady={cameraReady}
           type={cameraType}
-          style={styles.camera}
+          style={{ width, height }}
           ref={cameraRef}
           flashMode={activeSettings['Flash Mode']}
           whiteBalance={activeSettings['White Balance']}
@@ -174,10 +195,8 @@ const styles = StyleSheet.create({
     fontSize: 32
   },
   container: {
-    flex: 1
-  },
-  camera: {
-    flex: 1
+    flex: 1,
+    backgroundColor: 'black'
   },
   addBtn: {
     position: 'absolute',

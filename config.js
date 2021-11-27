@@ -6,6 +6,3 @@ export const colors = {
 };
 
 export const albumName = 'DCIM';
-export const defaults = {
-  'Ratios': 9
-}

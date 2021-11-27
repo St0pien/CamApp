@@ -1,21 +1,17 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import RadioButton from './RadioButton'
-import {colors, defaults} from '../config';
+import {colors} from '../config';
 
-const RadioGroup = ({ title, data, onChange }) => {
+const RadioGroup = ({ title, data, chosen, onChange }) => {
   if (!data) return null;
 
   if (!(data instanceof Array)) data = Object.keys(data);
-  const [chosen, setChosen] = useState(defaults[title] ? defaults[title] : 0);
+  const index = data.indexOf(chosen);
+  chosen = index > -1 ? index : 0;
   const choose = index => {
-    setChosen(index);
     onChange(title, data[index]);
   }
-
-  useEffect(() => {
-    choose(defaults[title] ? defaults[title] : 0);
-  }, []);
 
   return (
     <View>
