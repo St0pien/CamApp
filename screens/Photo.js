@@ -19,13 +19,11 @@ const Photo = ({ navigation, route }) => {
 
   const width = route.params.item.width;
   const height = route.params.item.height;
-  const bigger = width < height ? height : width;
-  const smaller = width > height ? height : width;
 
   return (
     <View style={styles.container}>
       <Image style={styles.img} source={{ uri: route.params.item.uri }} />
-      <Text style={styles.sizeLabel}>{bigger} x {smaller}</Text>
+      <Text style={styles.sizeLabel}>{width} x {height}</Text>
       <View style={styles.buttons}>
         <CircleButton onPress={share} name="share-alt" size={50} />
         <CircleButton onPress={deleteItem} name="trash" size={50} />

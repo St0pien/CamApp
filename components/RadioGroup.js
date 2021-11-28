@@ -1,16 +1,19 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import RadioButton from './RadioButton'
 import {colors} from '../config';
+import CameraSettingsContext from '../contexts/CameraSettingsContext';
 
-const RadioGroup = ({ title, data, chosen, onChange }) => {
+const RadioGroup = ({ title, data }) => {
   if (!data) return null;
 
   if (!(data instanceof Array)) data = Object.keys(data);
-  const index = data.indexOf(chosen);
-  chosen = index > -1 ? index : 0;
+  const { activeSettings, changeSettings } = useContext(CameraSettingsContext);
+  const current = activeSettings[title];
+  const index = data.indexOf(current);
+  const chosen = index > -1 ? index : 0;
   const choose = index => {
-    onChange(title, data[index]);
+    changeSettings(title, data[index]);
   }
 
   return (

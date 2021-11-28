@@ -3,20 +3,19 @@ import {
   StyleSheet,
   Text,
   View,
-  ToastAndroid,
   ActivityIndicator
 } from 'react-native';
 import { Camera } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
 import CircleButton from '../components/CircleButton';
 import { colors } from '../config';
 import Toolbar from '../components/Toolbar';
 import { Dimensions } from 'react-native';
+import CameraSettingsContext from '../contexts/CameraSettingsContext';
+import usePhotoTaking from '../utils/photoTaking';
+import useCameraSettings from '../utils/cameraSettings';
 
 const CameraScreen = () => {
   const [permGranted, setPermGranted] = useState(null);
-  const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
-  const [photoInProgress, setPhotoInProgress] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -28,39 +27,7 @@ const CameraScreen = () => {
 
   const cameraRef = useRef(null);
 
-  const reverse = () => {
-    setCameraType(
-      cameraType === Camera.Constants.Type.back
-        ? Camera.Constants.Type.front
-        : Camera.Constants.Type.back
-    );
-  };
-
-  const takePhoto = () => {
-    if (!cameraRef.current) return;
-    if (photoInProgress) return;
-
-    (async () => {
-      setPhotoInProgress(true);
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0,
-        base64: false,
-        exif: false
-      });
-      ToastAndroid.show(
-        'Photo taken',
-        ToastAndroid.CENTER,
-        ToastAndroid.CENTER
-      );
-      await MediaLibrary.createAssetAsync(photo.uri);
-      ToastAndroid.show(
-        'Photo saved',
-        ToastAndroid.CENTER,
-        ToastAndroid.CENTER
-      );
-      setPhotoInProgress(false);
-    })();
-  };
+  const { cameraType, photoInProgress, takePhoto, reverse } = usePhotoTaking(cameraRef);
 
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [animateSettings, setAnimateSettings] = useState(false);
@@ -69,48 +36,7 @@ const CameraScreen = () => {
     setSettingsVisible(!settingsVisible);
   };
 
-  const [settings, setSettings] = useState({});
-  const [activeSettings, setActiveSettings] = useState({});
-
-  const onSettingsSet = (title, value) => {
-    const buf = Object.assign({}, activeSettings);
-    buf[title] = value;
-    setActiveSettings(buf);
-  };
-
-  useEffect(() => {
-    (async () => {
-      if (!activeSettings.Ratios) return;
-      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(
-        activeSettings.Ratios
-      );
-      const buf = JSON.parse(JSON.stringify(settings));
-      buf.Sizes = sizes;
-      setSettings(buf);
-    })();
-  }, [activeSettings]);
-
-  const cameraReady = () => {
-    (async () => {
-      const ratios = await cameraRef.current.getSupportedRatiosAsync();
-      const sizes = await cameraRef.current.getAvailablePictureSizesAsync(
-        '16:9'
-      );
-      setSettings({
-        'Flash Mode': Camera.Constants.FlashMode,
-        'White Balance': Camera.Constants.WhiteBalance,
-        Ratios: ratios,
-        Sizes: sizes
-      });
-
-      setActiveSettings({
-        'Flash Mode': 'auto',
-        'White Balance': 'cloudy',
-        Ratios: '16:9',
-        Sizes: '1920x1080'
-      });
-    })();
-  };
+  const { settings, activeSettings, changeSettings, cameraReady } = useCameraSettings(cameraRef);
 
   // render
   if (permGranted) {
@@ -123,49 +49,48 @@ const CameraScreen = () => {
     }
 
     return (
-      <View style={styles.container}>
-        <Toolbar
-          visible={settingsVisible}
-          animate={animateSettings}
-          settings={settings}
-          activeSettings={activeSettings}
-          onSettingsSet={onSettingsSet}
-        />
-        <Camera
-          onCameraReady={cameraReady}
-          type={cameraType}
-          style={{ width, height }}
-          ref={cameraRef}
-          flashMode={activeSettings['Flash Mode']}
-          whiteBalance={activeSettings['White Balance']}
-          ratio={activeSettings['Ratios']}
-          pictureSize={activeSettings['Sizes']}
-        ></Camera>
-        <CircleButton
-          onPress={takePhoto}
-          style={styles.addBtn}
-          name="circle"
-          size={50}
-        />
-        <CircleButton
-          onPress={reverse}
-          style={styles.revBtn}
-          name="undo-alt"
-          size={30}
-        />
-        <CircleButton
-          onPress={toggleSettings}
-          style={styles.settingsBtn}
-          name="cog"
-          size={30}
-        />
-        <ActivityIndicator
-          style={styles.loader}
-          size="large"
-          color={colors.primary}
-          animating={photoInProgress}
-        />
-      </View>
+      <CameraSettingsContext.Provider value={{ activeSettings, settings, changeSettings }}>
+        <View style={styles.container}>
+          <Toolbar
+            visible={settingsVisible}
+            animate={animateSettings}
+          />
+          <Camera
+            onCameraReady={cameraReady}
+            type={cameraType}
+            style={{ width, height }}
+            ref={cameraRef}
+            flashMode={activeSettings['Flash Mode']}
+            whiteBalance={activeSettings['White Balance']}
+            ratio={activeSettings['Ratios']}
+            pictureSize={activeSettings['Sizes']}
+          ></Camera>
+          <CircleButton
+            onPress={takePhoto}
+            style={styles.addBtn}
+            name="circle"
+            size={50}
+          />
+          <CircleButton
+            onPress={reverse}
+            style={styles.revBtn}
+            name="undo-alt"
+            size={30}
+          />
+          <CircleButton
+            onPress={toggleSettings}
+            style={styles.settingsBtn}
+            name="cog"
+            size={30}
+          />
+          <ActivityIndicator
+            style={styles.loader}
+            size="large"
+            color={colors.primary}
+            animating={photoInProgress}
+          />
+        </View>
+      </CameraSettingsContext.Provider>
     );
   } else if (permGranted === false) {
     return (

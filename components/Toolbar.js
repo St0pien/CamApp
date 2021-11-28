@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -8,10 +7,11 @@ import {
 } from 'react-native';
 import { colors } from '../config';
 import RadioGroup from './RadioGroup';
+import CameraSettingsContext from '../contexts/CameraSettingsContext';
 
 const halfWidth = -Dimensions.get('window').width / 2;
 
-const Toolbar = ({ visible, animate, settings, activeSettings, onSettingsSet }) => {
+const Toolbar = ({ visible, animate }) => {
   const target = visible ? 0 : halfWidth;
 
   const moveAnim = useRef(
@@ -29,9 +29,7 @@ const Toolbar = ({ visible, animate, settings, activeSettings, onSettingsSet }) 
     }
   }, [visible]);
 
-  const onChange = (title, value) => {
-    onSettingsSet(title, value);
-  };
+  const { settings } = useContext(CameraSettingsContext);
 
   return (
     <Animated.View
@@ -43,8 +41,6 @@ const Toolbar = ({ visible, animate, settings, activeSettings, onSettingsSet }) 
             key={title + JSON.stringify(vals)}
             title={title}
             data={vals}
-            chosen={activeSettings[title]}
-            onChange={onChange}
           />
         ))}
       </ScrollView>
